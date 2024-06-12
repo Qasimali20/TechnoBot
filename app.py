@@ -60,7 +60,7 @@ def user_input(user_question):
     docs = new_db.similarity_search(user_question)
     chain = get_conversational_chain()
     response = chain.invoke({"input_documents": docs, "question": user_question})
-    st.write("Reply: ", response["output_text"])
+    st.write(response["output_text"])
 
 def main():
     st.set_page_config(page_title="TechnoBot", page_icon="🤖", layout="wide")
