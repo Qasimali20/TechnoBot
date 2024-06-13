@@ -10,15 +10,12 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Define constants
 PDF_DIRECTORY = "pdfs"
 
-# Function to extract text from PDFs
 def get_pdf_text(pdf_directory):
     text = ""
     for filename in os.listdir(pdf_directory):
@@ -29,18 +26,15 @@ def get_pdf_text(pdf_directory):
                 text += page.extract_text()
     return text
 
-# Function to split text into chunks
 def get_text_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
     return text_splitter.split_text(text)
 
-# Function to create and save a vector store from text chunks
 def create_vector_store(text_chunks):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
     vector_store.save_local("faiss_index")
 
-# Function to load QA chain
 def load_conversational_chain():
     prompt_template = """
     Answer the question as detailed as possible from the provided context. If the answer is not in the provided context, just say, "answer is not available in the context". Don't provide a wrong answer.\n\n
@@ -49,11 +43,10 @@ def load_conversational_chain():
 
     Answer:
     """
-    model = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.3)
+    model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.3)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     return load_qa_chain(model, chain_type="stuff", prompt=prompt)
 
-# Function to process user input and generate a response
 def process_user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     vector_store = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
@@ -62,7 +55,6 @@ def process_user_input(user_question):
     response = chain.invoke({"input_documents": docs, "question": user_question})
     return response["output_text"]
 
-# Main function to run the Streamlit app
 def main():
     st.set_page_config(page_title="TechnoBot", page_icon="🤖", layout="wide")
     
@@ -116,7 +108,6 @@ def main():
 
     st.markdown("<header>Welcome to Techno Bot 🤖</header>", unsafe_allow_html=True)
 
-    # Initialize session state for chat history
     if 'history' not in st.session_state:
         st.session_state.history = []
 
@@ -133,7 +124,6 @@ def main():
             create_vector_store(text_chunks)
             st.success("Initial processing done. You can now ask questions.")
 
-    # Display chat history
     for chat in st.session_state.history:
         with st.container():
             st.markdown(f"<div class='chat-message user-message'><strong>You:</strong> {chat['question']}</div>", unsafe_allow_html=True)
